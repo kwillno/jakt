@@ -1,10 +1,16 @@
 import click
+from jakt.jakt import _jakt
 
 
 @click.group()
-@click.version_option(version="0.0.1", prog_name="Jakt")
+@click.version_option(version="0.0.1", prog_name="jakt")
 def cli():
-    """JAKT is just another (k)ommandline timetracker."""
+    """Jakt is just another (k)ommandline timetracker.
+
+    Jakt helps you keep track of how you spend your time.
+    Whether you want to keep better track of how much time
+    you spend on each project or want to keep yourself
+    accountable while working, jakt is the perfect tool."""
     pass
 
 
