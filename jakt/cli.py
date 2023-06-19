@@ -1,36 +1,73 @@
 import click
-from jakt.jakt import _jakt
+from jakt.jakt import _jakt, JaktActiveError, JaktNotActiveError
 
 
 @click.group()
 @click.version_option(version="0.0.1", prog_name="jakt")
-def cli():
+@click.pass_context
+def cli(ctx):
     """Jakt is just another (k)ommandline timetracker.
 
     Jakt helps you keep track of how you spend your time.
     Whether you want to keep better track of how much time
     you spend on each project or want to keep yourself
     accountable while working, jakt is the perfect tool."""
-    pass
+
+    ctx.ensure_object(dict)
+    ctx.obj['jakt'] = _jakt()
+    
 
 
 @cli.command()
 @click.argument("project")
-def start(project):
+@click.argument("tags", nargs = -1)
+@click.pass_context
+def start(ctx, project, tags):
     """Start a new timeslot"""
-    click.echo(f"Project: {project}")
+    jkt = ctx.obj['jakt']
+
+    try:
+        a = jkt.start(project=project, tags=tags)
+        click.echo(f"{a}")
+    except JaktActiveError:
+        status = jkt.status()
+        
+        click.echo("Other timer already started.")
+        click.echo(f"Timer started for {status['project']} with tags {status['tags']} at {status['start']}.")
+        click.echo(f"Timer has been running for {'20:20'}") # TODO: Calculate elapsed time.
 
 
 @cli.command()
-def stop():
+@click.pass_context
+def stop(ctx):
     """Stops current project"""
-    pass
+    jkt = ctx.obj['jakt']
+
+    try:
+        status = jkt.stop()
+
+        click.echo(f"Timer stopped for {status['project']} with tags {status['tags']} at {status['start']}.")
+        click.echo(f"Elapsed time is {'20:20'}") # TODO: Calculate elapsed time.
+    except JaktNotActiveError:
+        click.echo("No timer started.")
 
 
 @cli.command()
-def status():
+@click.pass_context
+def status(ctx):
     """Displays current status"""
-    pass
+    jkt = ctx.obj['jakt']
+
+    try:
+        status = jkt.status()
+        click.echo(f"Timer started for {status['project']} with tags {status['tags']} at {status['start']}.")
+        click.echo(f"Timer has been running for {'20:20'}") # TODO: Calculate elapsed time.
+    except JaktNotActiveError:
+        click.echo("No timer started.")
+
+
+    
+
 
 
 @cli.command()
@@ -128,4 +165,4 @@ def sync():
 
 
 if __name__ == "__main__":
-    cli()
+    cli(obj={})

@@ -3,15 +3,20 @@ import yaml
 import json
 import random
 
+# Selfdefined Errors
 class JaktError(Exception):
     pass
+
 
 class JaktActiveError(JaktError):
 	pass
 
+
 class JaktNotActiveError(JaktError):
 	pass
 
+
+# Main class
 class _jakt:
 	def __init__(self):
 		# TODO: Set up config
@@ -39,13 +44,13 @@ class _jakt:
 			standardConfig = {
 				"Remote": False
 			}
-			with open(self.pathConfig 'a') as f:
+			with open(self.pathConfig, 'a') as f:
 				yaml.dump(standardConfig, f, default_flow_style=False)
 
 
 
 	## Main working functions
-	def start(self, project: str, tags: list[str]) -> int:
+	def start(self, project: str, tags: list[str]) -> dict:
 		"""
 		Adds inputed data into the current file in jakt directory.
 		"""
@@ -54,7 +59,7 @@ class _jakt:
 			raise JaktActiveError
 
 		timeslot = {
-			"start": False,
+			"start": "now", # TODO: timething
 			"project": project,
 			"tags": tags
 		}
@@ -65,10 +70,10 @@ class _jakt:
 			f.write(timeslotJSON)
 			f.close()
 
-		return 0
+		return timeslot
 		
 
-	def stop(self) -> int:
+	def stop(self) -> dict:
 		if not os.path.exists(self.pathCurrent):
 			raise JaktNotActiveError
 
@@ -89,11 +94,9 @@ class _jakt:
 			json.dump(timeslot, f)
 
 		# Removes timeslot data in current timeslot
-		with open(self.pathCurrent, "w") as f:
-			f.write("")
-			f.close()
+		os.remove(self.pathCurrent)
 
-		return 0
+		return timeslot
 
 
 
