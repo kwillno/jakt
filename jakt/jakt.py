@@ -2,6 +2,9 @@ import os
 import yaml
 import json
 import random
+from datetime import datetime, timedelta
+from time import time
+import click
 
 # Selfdefined Errors
 class JaktError(Exception):
@@ -59,7 +62,7 @@ class _jakt:
 			raise JaktActiveError
 
 		timeslot = {
-			"start": "now", # TODO: timething
+			"start": round(time()),
 			"project": project,
 			"tags": tags
 		}
@@ -78,16 +81,17 @@ class _jakt:
 			raise JaktNotActiveError
 
 		# Takes data from current timeslot
-		with open(self.pathCurrent, "r") as f:
-			timeslot = json.load(f)
-			f.close()
+		#with open(self.pathCurrent, "r") as f:
+		#	timeslot = json.load(f)
+		#	f.close()
+		timeslot = self.status()
 
 		# Add new properties to timeslot
 		ts_id = '%08x' % random.randrange(16**8)
 		# TODO: Check if id already exists
 
 		timeslot["id"] = ts_id
-		timeslot["end"] = "now" # TODO: Choose a timesystem to use
+		timeslot["end"] = round(time())
 
 		# Add new timeslot to log
 		with open(self.pathTimeslots, "a") as f:
@@ -107,6 +111,18 @@ class _jakt:
 		with open(self.pathCurrent, "r") as f:
 			status = json.load(f)
 			f.close()
+
+		elapsedTime = datetime.fromtimestamp(round(time())) - datetime.fromtimestamp(status["start"])
+		status["elapsed"] = elapsedTime.seconds
+
+		hours, remainder = divmod(elapsedTime.seconds, 3600)
+		minutes, seconds = divmod(remainder, 60)
+
+		status["elapsedHour"] = hours
+		if seconds > 30:
+			status["elapsedMin"] = minutes + 1
+		else:
+			status["elapsedMin"] = minutes
 
 		# TODO: Elapsed time
 

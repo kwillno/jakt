@@ -1,5 +1,6 @@
 import click
-from jakt.jakt import _jakt, JaktActiveError, JaktNotActiveError
+from datetime import datetime
+from jakt.jakt import _jakt, JaktError, JaktActiveError, JaktNotActiveError
 
 
 @click.group()
@@ -46,8 +47,8 @@ def stop(ctx):
     try:
         status = jkt.stop()
 
-        click.echo(f"Timer stopped for {status['project']} with tags {status['tags']} at {status['start']}.")
-        click.echo(f"Elapsed time is {'20:20'}") # TODO: Calculate elapsed time.
+        click.echo(f"{status['project']} stopped at {datetime.fromtimestamp(status['start']).strftime('%H:%M')} {status['tags']}")
+        click.echo(f"Timer ran for {status['elapsedHour']:02}:{status['elapsedMin']:02}")
     except JaktNotActiveError:
         click.echo("No timer started.")
 
@@ -60,14 +61,10 @@ def status(ctx):
 
     try:
         status = jkt.status()
-        click.echo(f"Timer started for {status['project']} with tags {status['tags']} at {status['start']}.")
-        click.echo(f"Timer has been running for {'20:20'}") # TODO: Calculate elapsed time.
+        click.echo(f"{status['project']} started at {datetime.fromtimestamp(status['start']).strftime('%H:%M')} {status['tags']}")
+        click.echo(f"Timer has been running for {status['elapsedHour']:02}:{status['elapsedMin']:02}") # TODO: Calculate elapsed time.
     except JaktNotActiveError:
         click.echo("No timer started.")
-
-
-    
-
 
 
 @cli.command()
