@@ -18,6 +18,9 @@ class JaktActiveError(JaktError):
 class JaktNotActiveError(JaktError):
 	pass
 
+class JaktPathError(JaktError, path):
+	self.path = path
+
 
 # Main class
 class _jakt:
@@ -118,6 +121,10 @@ class _jakt:
 
 
 	def add(self):
+		"""
+		Adds new timeslot from. 
+		TODO: Implement add for known data.
+		"""
 		# Update 
 		self.status()
 
@@ -157,20 +164,22 @@ class _jakt:
 		"""
 		Returns a list of all logged timeslots
 		"""
-		with open(self.pathTimeslots, "r") as f:
-			timeslots = json.load(f)
-			f.close()
+		try:
+			with open(self.pathTimeslots, "r") as f:
+				timeslots = json.load(f)
+				f.close()
 
-		return timeslots
+			return timeslots
+		except OSError:
+			raise JaktPathError(self.pathTimeslots)
 
-	def putTimeslots(self, timeslots: list[dict]) -> int:
+	def putTimeslots(self, timeslots: list[dict]):
 		try:
 			with open(self.pathTimeslots, "w") as f:
 				json.dump(timeslots, f)
 				f.close()
-		except Exception:
-			return 1
-		return 0
+		except OSError:
+			raise JaktPathError(self.pathTimeslots)
 
 	## Helper functions
 	def generateUniqueID(self):
