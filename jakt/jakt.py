@@ -49,6 +49,8 @@ class _jakt:
 			}
 			with open(self.pathConfig, 'a') as f:
 				yaml.dump(standardConfig, f, default_flow_style=False)
+			with open(self.pathTimeslots, 'a') as f:
+				yaml.dump([], f, default_flow_style=False)
 
 
 
@@ -80,27 +82,13 @@ class _jakt:
 		if not os.path.exists(self.pathCurrent):
 			raise JaktNotActiveError
 
-		# Takes data from current timeslot
-		#with open(self.pathCurrent, "r") as f:
-		#	timeslot = json.load(f)
-		#	f.close()
-		timeslot = self.status()
-
-		# Add new properties to timeslot
-		ts_id = '%08x' % random.randrange(16**8)
-		# TODO: Check if id already exists
-
-		timeslot["id"] = ts_id
-		timeslot["end"] = round(time())
-
-		# Add new timeslot to log
-		with open(self.pathTimeslots, "a") as f:
-			json.dump(timeslot, f)
+		self.status()
+		self.add()
 
 		# Removes timeslot data in current timeslot
 		os.remove(self.pathCurrent)
 
-		return timeslot
+		return self.activeTimeslot
 
 
 
@@ -124,19 +112,38 @@ class _jakt:
 		else:
 			status["elapsedMin"] = minutes
 
-		# TODO: Elapsed time
+		self.activeTimeslot = status
 
 		return status
 
 
 	def add(self):
-		pass
+		# Update 
+		self.status()
+
+		#  Create object to append
+		ts = {
+			"id": self.generateUniqueID(), 
+			"start": self.activeTimeslot["start"],
+			"end": round(time()),
+			"project": self.activeTimeslot["project"],
+			"tags": self.activeTimeslot["tags"]
+		}
+
+		# Find all logged timeslots
+		timeslots = self.getTimeslots()
+
+		# Append new timeslot to list
+		timeslots.append(ts)
+
+		# Write all timeslots, including newly added to file
+		self.putTimeslots(timeslots)
 
 	def report(self):
 		pass
 
 
-	## Get data
+	## Get and put data
 	def getCategories(self):
 		pass
 
@@ -146,8 +153,38 @@ class _jakt:
 	def getTags(self):
 		pass
 
-	def getTimeslots(self):
-		pass
+	def getTimeslots(self) -> list[dict]:
+		"""
+		Returns a list of all logged timeslots
+		"""
+		with open(self.pathTimeslots, "r") as f:
+			timeslots = json.load(f)
+			f.close()
+
+		return timeslots
+
+	def putTimeslots(self, timeslots: list[dict]) -> int:
+		try:
+			with open(self.pathTimeslots, "w") as f:
+				json.dump(timeslots, f)
+				f.close()
+		except Exception:
+			return 1
+		return 0
+
+	## Helper functions
+	def generateUniqueID(self):
+		timeslots = self.getTimeslots()
+
+		usedIDs = []
+		for ts in timeslots:
+			usedIDs.append(ts["id"])
+
+		ID = '%08x' % random.randrange(16**8)
+		if ID not in usedIDs:
+			return ID
+		else:
+			return self.generateUniqueID()
 
 
 	## Remote syncronization

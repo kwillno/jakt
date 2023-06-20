@@ -99,9 +99,7 @@ def ls(to, from_, categories, projects, tags, timeslots):
     else:
         click.echo(f"Lists default timeslots")
 
-
-@cli.command()
-@click.option(
+'''@click.option(
     "-t",
     "--to",
     "to",
@@ -119,10 +117,15 @@ def ls(to, from_, categories, projects, tags, timeslots):
     "-c", "--categories", is_flag=True, default=False, help="Display categories"
 )
 @click.option("-p", "--projects", is_flag=True, default=False, help="Display projects")
-@click.option("-t", "--tags", is_flag=True, default=False, help="Display tags")
-def add(to, from_, categories, projects, tags):
+@click.option("-t", "--tags", is_flag=True, default=False, help="Display tags")'''
+@cli.command()
+@click.pass_context
+def add(ctx):
     """Add a timeslot that was not logged live"""
-    pass
+    jkt = ctx.obj['jakt']
+
+    jkt.add()
+    
 
 
 @cli.command()
