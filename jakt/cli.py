@@ -28,15 +28,19 @@ def start(ctx, project, tags):
     jkt = ctx.obj['jakt']
 
     try:
-        a = jkt.start(project=project, tags=tags)
-        click.echo(f"{a}")
-    except JaktActiveError:
-        status = jkt.status()
-        
-        click.echo("Other timer already started.")
-        click.echo(f"Timer started for {status['project']} with tags {status['tags']} at {status['start']}.")
-        click.echo(f"Timer has been running for {'20:20'}") # TODO: Calculate elapsed time.
+        response = jkt.start(project=project, tags=tags)
 
+        hrStart = datetime.fromtimestamp(response["start"]).strftime('%H:%M')
+        tags = response["tags"]
+
+        click.echo(f"{project} started at {hrStart}.")
+        click.echo(f"Tags: {' '.join(str(t) for t in tags)}")
+
+
+    except JaktActiveError:
+
+        click.echo("Other timer already running.")
+        ctx.invoke(status)
 
 @cli.command()
 @click.pass_context
@@ -45,10 +49,17 @@ def stop(ctx):
     jkt = ctx.obj['jakt']
 
     try:
-        status = jkt.stop()
+        response = jkt.stop()
 
-        click.echo(f"{status['project']} stopped at {datetime.fromtimestamp(status['start']).strftime('%H:%M')} {status['tags']}")
-        click.echo(f"Timer ran for {status['elapsedHour']:02}:{status['elapsedMin']:02}")
+        project = response["project"]
+        hrStart = datetime.fromtimestamp(response["start"]).strftime('%H:%M')
+        hrStop  = datetime.fromtimestamp(response["end"]).strftime('%H:%M')
+        tags = response["tags"]
+
+        click.echo(f"{project} stopped at {hrStop}.")
+        click.echo(f"Tags: {' '.join(str(t) for t in tags)}")
+        click.echo(f"Timer ran for {response['elapsedHour']:02}:{response['elapsedMin']:02}")
+
     except JaktNotActiveError:
         click.echo("No timer started.")
 
@@ -60,9 +71,16 @@ def status(ctx):
     jkt = ctx.obj['jakt']
 
     try:
-        status = jkt.status()
-        click.echo(f"{status['project']} started at {datetime.fromtimestamp(status['start']).strftime('%H:%M')} {status['tags']}")
-        click.echo(f"Timer has been running for {status['elapsedHour']:02}:{status['elapsedMin']:02}") # TODO: Calculate elapsed time.
+        response = jkt.status()
+
+        project = response["project"]
+        hrStart = datetime.fromtimestamp(response["start"]).strftime('%H:%M')
+        tags = response["tags"]
+
+        click.echo(f"{project} started at {hrStart}.")
+        click.echo(f"Tags: {' '.join(str(t) for t in tags)}")
+        click.echo(f"Runtime is {response['elapsedHour']:02}:{response['elapsedMin']:02}")
+
     except JaktNotActiveError:
         click.echo("No timer started.")
 
