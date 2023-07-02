@@ -18,8 +18,10 @@ class JaktActiveError(JaktError):
 class JaktNotActiveError(JaktError):
 	pass
 
-class JaktPathError(JaktError, path):
-	self.path = path
+class JaktPathError(JaktError):
+
+	def __init__(self, path):
+		self.path = path
 
 
 # Main class
