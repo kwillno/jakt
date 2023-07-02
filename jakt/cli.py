@@ -1,5 +1,6 @@
 import click
 from datetime import datetime
+from time import time
 from jakt.jakt import _jakt, JaktError, JaktActiveError, JaktNotActiveError
 
 
@@ -53,7 +54,7 @@ def stop(ctx):
 
         project = response["project"]
         hrStart = datetime.fromtimestamp(response["start"]).strftime('%H:%M')
-        hrStop  = datetime.fromtimestamp(response["end"]).strftime('%H:%M')
+        hrStop  = datetime.fromtimestamp(round(time())).strftime('%H:%M')
         tags = response["tags"]
 
         click.echo(f"{project} stopped at {hrStop}.")

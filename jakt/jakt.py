@@ -54,9 +54,9 @@ class _jakt:
 			}
 			with open(self.pathConfig, 'a') as f:
 				yaml.dump(standardConfig, f, default_flow_style=False)
-			with open(self.pathTimeslots, 'a') as f:
-				yaml.dump([], f, default_flow_style=False)
-
+		else:
+			# TODO: Set up config-loading
+			pass
 
 
 	## Main working functions
@@ -154,13 +154,53 @@ class _jakt:
 
 	## Get and put data
 	def getCategories(self):
-		pass
+		"""
+		Returns a list of all defined categories
+		"""
+		try:
+			with open(self.pathCategories, "r") as f:
+				categories = json.load(f)
+				f.close()
+
+			return categories
+		except OSError:
+			raise JaktPathError(self.pathCategories)
 
 	def getProjects(self):
-		pass
+		"""
+		Returns list of all projects
+		"""
+		timeslots = self.getTimeslots()
 
-	def getTags(self):
-		pass
+		projects = []
+		for i in range(len(timeslots)):
+			if timeslots[i]["project"] not in projects:
+				projects.append(timeslots[i]["project"])
+
+		return projects
+
+	def getTags(self, project: str = None) -> list:
+		"""
+		Returns a list of all used tags. 
+
+		If project is given only tags for the matching project are given.
+		"""
+		timeslots = self.getTimeslots()
+
+		tags = []
+		for i in range(len(timeslots)):
+			if project and not (project == timeslots[i]["project"]):
+				continue
+
+			currentTags = timeslots[i]["tags"]
+
+			for j in range(len(currentTags)):
+
+				if currentTags[j] not in tags:
+					tags.append(currentTags[j])
+
+		return tags
+
 
 	def getTimeslots(self) -> list[dict]:
 		"""
