@@ -90,6 +90,8 @@ class _jakt:
 		self.status()
 		self.add()
 
+		# TODO: Generate end-data in this fnc
+
 		# Removes timeslot data in current timeslot
 		os.remove(self.pathCurrent)
 

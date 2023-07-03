@@ -5,7 +5,7 @@ from jakt.jakt import _jakt, JaktError, JaktActiveError, JaktNotActiveError
 
 
 @click.group()
-@click.version_option(version="0.0.1", prog_name="jakt")
+@click.version_option(version="0.0.2", prog_name="jakt")
 @click.pass_context
 def cli(ctx):
     """Jakt is just another (k)ommandline timetracker.
@@ -181,7 +181,12 @@ def config():
 @cli.command()
 def sync():
     """Syncronizes data with server"""
+    pass
 
+@cli.command()
+def license():
+    """Outputs license"""
+    pass
 
 if __name__ == "__main__":
     cli(obj={})
