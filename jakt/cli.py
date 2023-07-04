@@ -31,16 +31,17 @@ def start(ctx, project, tags):
     try:
         response = jkt.start(project=project, tags=tags)
 
-        hrStart = datetime.fromtimestamp(response["start"]).strftime('%H:%M')
-        tags = response["tags"]
+        project = click.style(project, fg='blue', bold=True)
+        hrStart = click.style(datetime.fromtimestamp(response["start"]).strftime('%H:%M'), fg='red', bold=True )
+        tags = click.style(' '.join(str(t) for t in tags), fg='green')
 
-        click.echo(f"{project} started at {hrStart}.")
-        click.echo(f"Tags: {' '.join(str(t) for t in tags)}")
+        click.echo(f"{project} started at {hrStart}")
+        click.echo(f"Tags: {tags}")
 
 
     except JaktActiveError:
 
-        click.echo("Other timer already running.")
+        click.echo("Other timer already running")
         ctx.invoke(status)
 
 @cli.command()
@@ -52,14 +53,15 @@ def stop(ctx):
     try:
         response = jkt.stop()
 
-        project = response["project"]
-        hrStart = datetime.fromtimestamp(response["start"]).strftime('%H:%M')
-        hrStop  = datetime.fromtimestamp(round(time())).strftime('%H:%M')
-        tags = response["tags"]
+        project = click.style(response["project"], fg='blue', bold=True)
+        
+        hrStop = click.style(datetime.fromtimestamp(round(time())).strftime('%H:%M'), fg='red', bold=True )
+        tags = click.style(' '.join(str(t) for t in response["tags"]), fg='green')
+        runtime = click.style(f"{response['elapsedHour']:02}:{response['elapsedMin']:02}", fg="green", bold = True)
 
-        click.echo(f"{project} stopped at {hrStop}.")
-        click.echo(f"Tags: {' '.join(str(t) for t in tags)}")
-        click.echo(f"Timer ran for {response['elapsedHour']:02}:{response['elapsedMin']:02}")
+        click.echo(f"{project} stopped at {hrStop}")
+        click.echo(f"Tags: {tags}")
+        click.echo(f"Timer ran for {runtime}")
 
     except JaktNotActiveError:
         click.echo("No timer started.")
@@ -74,13 +76,14 @@ def status(ctx):
     try:
         response = jkt.status()
 
-        project = response["project"]
-        hrStart = datetime.fromtimestamp(response["start"]).strftime('%H:%M')
-        tags = response["tags"]
+        project = click.style(response["project"], fg='blue', bold=True)
+        hrStart = click.style(datetime.fromtimestamp(response["start"]).strftime('%H:%M'), fg='red', bold=True )
+        tags = click.style(' '.join(str(t) for t in response["tags"]), fg='green')
+        runtime = click.style(f"{response['elapsedHour']:02}:{response['elapsedMin']:02}", fg="green", bold = True)
 
         click.echo(f"{project} started at {hrStart}.")
-        click.echo(f"Tags: {' '.join(str(t) for t in tags)}")
-        click.echo(f"Runtime is {response['elapsedHour']:02}:{response['elapsedMin']:02}")
+        click.echo(f"Tags: {tags}")
+        click.echo(f"Runtime is {runtime}")
 
     except JaktNotActiveError:
         click.echo("No timer started.")
@@ -88,17 +91,15 @@ def status(ctx):
 
 @cli.command()
 @click.option(
-    "-t",
     "--to",
     "to",
-    type=click.DateTime(formats=["%d-%m-%Y %H:%M:%S", "%H:%M:%S"]),
+    type=click.DateTime(formats=["%d-%m-%y"]),
     help="Starttime of search period",
 )
 @click.option(
-    "-f",
     "--from",
     "from_",
-    type=click.DateTime(formats=["%d-%m-%Y %H:%M:%S", "%H:%M:%S"]),
+    type=click.DateTime(formats=["%d-%m-%y"]),
     help="Endtime of search period",
 )
 @click.option(
@@ -106,17 +107,91 @@ def status(ctx):
 )
 @click.option("-p", "--projects", is_flag=True, default=False, help="Display projects")
 @click.option("-t", "--tags", is_flag=True, default=False, help="Display tags")
-@click.option("-s", "--timeslots", is_flag=True, default=True, help="Display timeslots")
-def ls(to, from_, categories, projects, tags, timeslots):
+@click.pass_context
+def ls(ctx, to, from_, categories, projects, tags):
     """Lists timeslots"""
-    if from_ and to:
-        click.echo(f"From {from_} to {to}")
+    jkt = ctx.obj['jakt']
 
-    elif bool(from_) ^ bool(to):
-        click.echo("Both -t/--to and -f/--from need to be set")
 
+    if categories:
+        categories = jkt.getCategories()
+
+        for cat in categories:
+            click.echo(f"{click.style(cat, fg='red', bold=True)}")
+
+        return
+
+    if projects:
+        projects = jkt.getProjects()
+
+        for project in projects:
+            click.echo(f"{click.style(project, fg='blue', bold=True)}")
+
+        return
+
+    if tags:
+        tags = jkt.getTags()
+
+        for tag in tags:
+            click.echo(f"{click.style(tag, fg='green')}")
+
+        return
+
+
+    if from_ or to:
+        # A few cases of input sanitation
+        if from_ and (not to):
+            to = datetime.now()
+
+        elif to and (not from_):
+            click.echo("--from must be set if --to is set")
+            return 
+
+        if from_ > to:
+            # Switch the parameters if they are given in the wrong order
+            a = from_
+            from_ = to
+            to = a
+            click.echo("--to/--from in wrong order. Flipping them.")
+
+        timeslots = jkt.getTimeslots(to, from_)
     else:
-        click.echo(f"Lists default timeslots")
+        timeslots = jkt.getTimeslots()
+
+    for i in range(len(timeslots)):
+        if i == 10:
+            click.echo(f"{len(timeslots)-i} timeslots not shown.")
+            break
+
+        ts = timeslots[i]
+
+        # Define all styles and shown data
+        ts_id = click.style(ts['id'], fg='yellow')
+        ts_project = click.style(ts['project'], fg='blue', bold=True)
+        
+        # Make sure time is readable and makes sense
+        ts_start = datetime.fromtimestamp(ts['start'])
+        ts_end = datetime.fromtimestamp(ts['end'])
+
+        if ts_start.date() == ts_end.date():
+            ts_start_hr = ts_start.strftime("%H:%M")
+        else:
+            ts_start_hr = ts_start.strftime("%H:%M %d-%m-%y")
+
+        ts_end_hr = ts_end.strftime("%H:%M %d-%m-%y")
+
+        s = str(ts_end - ts_start).split(":")
+        ts_duration = click.style(f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}", fg='green')
+
+
+        ts_tags = click.style(' '.join(str(t) for t in ts['tags']), fg='green')
+
+        # Display data on single line
+        click.echo(
+            f"{ts_id} {ts_duration} ({ts_start_hr} - {ts_end_hr}) {ts_project} {ts_tags}")
+        #click.echo(ts)
+
+
 
 '''@click.option(
     "-t",

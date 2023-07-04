@@ -32,7 +32,7 @@ class _jakt:
 
 		self.dataPath = os.path.join(os.path.expanduser('~'), ".jakt")
 		self.pathConfig = os.path.join(self.dataPath, "config.yml")
-		self.pathCategories = os.path.join(self.dataPath, "categories.json")
+		self.pathCategories = os.path.join(self.dataPath, "categories.yml")
 		self.pathProjects = os.path.join(self.dataPath, "projects.json")
 		self.pathTimeslots = os.path.join(self.dataPath, "timeslots.json")
 		self.pathCurrent = os.path.join(self.dataPath, "current.json")
@@ -161,7 +161,7 @@ class _jakt:
 		"""
 		try:
 			with open(self.pathCategories, "r") as f:
-				categories = json.load(f)
+				categories = yaml.safe_load(f)
 				f.close()
 
 			return categories
@@ -204,18 +204,35 @@ class _jakt:
 		return tags
 
 
-	def getTimeslots(self) -> list[dict]:
+	def getTimeslots(self, from_ = False, to = False) -> list[dict]:
 		"""
-		Returns a list of all logged timeslots
+		Returns a list of logged timeslots
 		"""
 		try:
 			with open(self.pathTimeslots, "r") as f:
 				timeslots = json.load(f)
 				f.close()
 
+			# Want latest timeslot to be first in list
+			timeslots.reverse()
+
+			# TODO: Implement filtering with to and from_
+			if to and from_:
+				# Remove timeslots that do not match
+				pass
+
 			return timeslots
 		except OSError:
 			raise JaktPathError(self.pathTimeslots)
+
+	def getTimeslot(self, queryId: str) -> dict:
+		timeslots = self.getTimeslots()
+
+		for ts in timeslots:
+			if ts['id'] == queryId:
+				return ts
+
+		return False
 
 	def putTimeslots(self, timeslots: list[dict]):
 		try:
