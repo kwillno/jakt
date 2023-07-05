@@ -1,7 +1,7 @@
 import click
 from datetime import datetime
 from time import time
-from jakt.jakt import _jakt, timeslot, JaktError, JaktActiveError, JaktNotActiveError
+from jakt.jakt import _jakt, timeslot, JaktReport, JaktError, JaktActiveError, JaktNotActiveError
 
 
 @click.group()
@@ -111,7 +111,7 @@ def status(ctx):
 # TODO: Display all timeslots using -a
 @click.pass_context
 def ls(ctx, to, from_, categories, projects, tags):
-    """Lists timeslots"""
+    """Lists timeslots and other data"""
     jkt = ctx.obj['jakt']
 
 
@@ -240,9 +240,10 @@ def report(ctx):
     """Generates reports from timetracker data"""
     jkt = ctx.obj['jakt']
 
-    response = jkt.report()
-
-    click.echo(response)
+    jkt_report = jkt.report()
+    projects = jkt_report.getProjectReport()
+    for project in projects:
+        click.echo(f"{project['project']}  {project['time']}")
 
 
 @cli.command()

@@ -41,6 +41,10 @@ class timeslot:
 		end = datetime.fromtimestamp(self.end)
 		self.duration = end - start
 
+	def __str__(self):
+		return f"<ts: {self.id} {self.project} {self.tags} {self.start.strftime('%d-%m-%y %H:%M')}>"
+
+
 	@classmethod
 	def from_json(cls, json_obj: dict):
 		return cls( ID=json_obj['id'], start=json_obj['start'], end=json_obj['end'], project=json_obj['project'], tags=json_obj['tags'])
@@ -70,17 +74,60 @@ class timeslot:
 		return {'hh':hh, 'H': hh, "mm": mm, 'M': M, "ss": ss}
 
 
-class jakt_report:
+class JaktReport:
 	def __init__(self, jkt):
 		#self.categories = jkt.getCategories()
-		self.projects = jkt.getProjects()
+		projects = jkt.getProjects()
 
-		for project in self.projects:
-			pass
-			
+		self.data = []
+		for i in range(len(projects)):
+			project = projects[i]
+
+			projectDuration = timedelta(0)
+
+			tags = jkt.getTags(project=project)
+			for j in range(len(tags)):
+				timeslots = jkt.getTimeslots(project=project, tag=tags[j])
+
+				tagDuration = timedelta(0)
+				for ts in timeslots:
+					tagDuration += ts.duration
+					projectDuration += ts.duration
+
+				tagobj = {
+					'tag': tags[j],
+					'timeslots': timeslots,
+					'time': tagDuration
+				}
+
+				tags[j] = tagobj
+
+			projectObj = {
+				'project': project,
+				'tags': tags,
+				'time': projectDuration
+			}
+
+			self.data.append(projectObj)
+
 
 	def __str__(self):
-		return f"{self.projects}"
+		return f"{self.data}"
+
+	def hrDuration(self, td):
+		s = str(td).split(':')
+		return f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}"
+
+	def getProjectReport(self):
+		report = []
+		for proj in self.data:
+			proj_report = {
+				'project': proj['project'],
+				'time': self.hrDuration(proj['time'])
+			}
+			report.append(proj_report)
+
+		return report
 
 
 # Main class
@@ -210,14 +257,12 @@ class _jakt:
 
 		return ts
 
-	def report(self) -> jakt_report:
+	def report(self) -> JaktReport:
 		"""
-		Returns a jakt_report object containg report info
+		Returns a JaktReport object
 		"""
 
-		rep = jakt_report(self)
-
-		return rep
+		return JaktReport(self)
 
 
 	## Get and put data
@@ -298,6 +343,15 @@ class _jakt:
 						project_filter.append(ts)
 
 				timeslots = project_filter
+
+			# Filters by tags if tage are given
+			if tag:
+				tag_filter = []
+				for ts in timeslots:
+					if tag in ts.tags:
+						tag_filter.append(ts)
+
+				timeslots = tag_filter
 
 			return timeslots
 		except OSError:
