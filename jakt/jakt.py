@@ -24,6 +24,65 @@ class JaktPathError(JaktError):
 		self.path = path
 
 
+class timeslot:
+	def __init__(self, ID: str, start: int, end: int, project: str, tags: list[str]):
+		self.id = ID
+
+		self.start = start
+		self.end = end
+		self.start_dt = datetime.fromtimestamp(self.start)
+		self.end_dt = datetime.fromtimestamp(self.end)
+
+		self.project = project
+		self.tags = tags
+
+		# Calculate duration
+		start = datetime.fromtimestamp(self.start)
+		end = datetime.fromtimestamp(self.end)
+		self.duration = end - start
+
+	@classmethod
+	def from_json(cls, json_obj: dict):
+		return cls( ID=json_obj['id'], start=json_obj['start'], end=json_obj['end'], project=json_obj['project'], tags=json_obj['tags'])
+
+	def toDict(self) -> dict:
+		obj = {
+			'id': self.id,
+			'start': self.start,
+			'end': self.end,
+			'project': self.project,
+			'tags': self.tags,
+		}
+
+		return obj
+
+	def getDurationHR(self):
+		"""
+		Return the data needed to display Human Readale duration
+		"""
+		hh, remainder = divmod(int(self.duration.total_seconds()), 3600)
+		mm, ss = divmod(remainder, 60)
+
+		M = mm
+		if ss > 30:
+			M = mm + 1
+
+		return {'hh':hh, 'H': hh, "mm": mm, 'M': M, "ss": ss}
+
+
+class jakt_report:
+	def __init__(self, jkt):
+		#self.categories = jkt.getCategories()
+		self.projects = jkt.getProjects()
+
+		for project in self.projects:
+			pass
+			
+
+	def __str__(self):
+		return f"{self.projects}"
+
+
 # Main class
 class _jakt:
 	def __init__(self):
@@ -83,19 +142,29 @@ class _jakt:
 		return timeslot
 		
 
-	def stop(self) -> dict:
+	def stop(self) -> timeslot:
 		if not os.path.exists(self.pathCurrent):
 			raise JaktNotActiveError
 
+		# Update status from file
 		self.status()
-		self.add()
 
-		# TODO: Generate end-data in this fnc
+		#  Create object to add
+		ts = timeslot(
+			ID = self.generateUniqueID(), 
+			start = self.activeTimeslot["start"],
+			end = round(time()),
+			project = self.activeTimeslot["project"],
+			tags = self.activeTimeslot["tags"]
+		)
+
+		# Add object to timeslots
+		ts_added = self.add(ts)
 
 		# Removes timeslot data in current timeslot
 		os.remove(self.pathCurrent)
 
-		return self.activeTimeslot
+		return ts_added
 
 
 
@@ -124,22 +193,11 @@ class _jakt:
 		return status
 
 
-	def add(self):
+	def add(self, ts: timeslot) -> timeslot:
 		"""
 		Adds new timeslot from. 
 		TODO: Implement add for known data.
 		"""
-		# Update 
-		self.status()
-
-		#  Create object to append
-		ts = {
-			"id": self.generateUniqueID(), 
-			"start": self.activeTimeslot["start"],
-			"end": round(time()),
-			"project": self.activeTimeslot["project"],
-			"tags": self.activeTimeslot["tags"]
-		}
 
 		# Find all logged timeslots
 		timeslots = self.getTimeslots()
@@ -150,12 +208,20 @@ class _jakt:
 		# Write all timeslots, including newly added to file
 		self.putTimeslots(timeslots)
 
-	def report(self):
-		pass
+		return ts
+
+	def report(self) -> jakt_report:
+		"""
+		Returns a jakt_report object containg report info
+		"""
+
+		rep = jakt_report(self)
+
+		return rep
 
 
 	## Get and put data
-	def getCategories(self):
+	def getCategories(self) -> list[str]:
 		"""
 		Returns a list of all defined categories
 		"""
@@ -168,7 +234,7 @@ class _jakt:
 		except OSError:
 			raise JaktPathError(self.pathCategories)
 
-	def getProjects(self):
+	def getProjects(self) -> list[str]:
 		"""
 		Returns list of all projects
 		"""
@@ -176,12 +242,12 @@ class _jakt:
 
 		projects = []
 		for i in range(len(timeslots)):
-			if timeslots[i]["project"] not in projects:
-				projects.append(timeslots[i]["project"])
+			if timeslots[i].project not in projects:
+				projects.append(timeslots[i].project)
 
 		return projects
 
-	def getTags(self, project: str = None) -> list:
+	def getTags(self, project: str = None) -> list[str]:
 		"""
 		Returns a list of all used tags. 
 
@@ -191,10 +257,10 @@ class _jakt:
 
 		tags = []
 		for i in range(len(timeslots)):
-			if project and not (project == timeslots[i]["project"]):
+			if project and not (project == timeslots[i].project):
 				continue
 
-			currentTags = timeslots[i]["tags"]
+			currentTags = timeslots[i].tags
 
 			for j in range(len(currentTags)):
 
@@ -204,7 +270,7 @@ class _jakt:
 		return tags
 
 
-	def getTimeslots(self, from_ = False, to = False) -> list[dict]:
+	def getTimeslots(self, from_ = False, to = False, project = False, tag = False) -> list[timeslot]:
 		"""
 		Returns a list of logged timeslots
 		"""
@@ -213,31 +279,48 @@ class _jakt:
 				timeslots = json.load(f)
 				f.close()
 
-			# Want latest timeslot to be first in list
-			timeslots.reverse()
+			# Create timeslot instances
+			for i in range(len(timeslots)):
+				timeslots[i] = timeslot.from_json(timeslots[i])
+
 
 			# TODO: Implement filtering with to and from_
 			if to and from_:
 				# Remove timeslots that do not match
 				pass
 
+
+			# Filters by project if project is given
+			if project:
+				project_filter = []
+				for ts in timeslots:
+					if ts.project == project:
+						project_filter.append(ts)
+
+				timeslots = project_filter
+
 			return timeslots
 		except OSError:
 			raise JaktPathError(self.pathTimeslots)
 
-	def getTimeslot(self, queryId: str) -> dict:
+	def getTimeslot(self, queryId: str) -> timeslot:
 		timeslots = self.getTimeslots()
 
 		for ts in timeslots:
-			if ts['id'] == queryId:
+			if ts.id == queryId:
 				return ts
 
 		return False
 
-	def putTimeslots(self, timeslots: list[dict]):
+	def putTimeslots(self, timeslots: list[timeslot]):
+		obj_list = []
+
+		for ts in timeslots:
+			obj_list.append(ts.toDict())
+
 		try:
 			with open(self.pathTimeslots, "w") as f:
-				json.dump(timeslots, f)
+				json.dump(obj_list, f)
 				f.close()
 		except OSError:
 			raise JaktPathError(self.pathTimeslots)
@@ -248,7 +331,7 @@ class _jakt:
 
 		usedIDs = []
 		for ts in timeslots:
-			usedIDs.append(ts["id"])
+			usedIDs.append(ts.id)
 
 		ID = '%08x' % random.randrange(16**8)
 		if ID not in usedIDs:
@@ -266,4 +349,5 @@ class _jakt:
 
 	def push(self):
 		pass
+
 

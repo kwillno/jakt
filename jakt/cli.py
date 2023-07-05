@@ -1,7 +1,7 @@
 import click
 from datetime import datetime
 from time import time
-from jakt.jakt import _jakt, JaktError, JaktActiveError, JaktNotActiveError
+from jakt.jakt import _jakt, timeslot, JaktError, JaktActiveError, JaktNotActiveError
 
 
 @click.group()
@@ -51,13 +51,14 @@ def stop(ctx):
     jkt = ctx.obj['jakt']
 
     try:
-        response = jkt.stop()
+        ts = jkt.stop()
 
-        project = click.style(response["project"], fg='blue', bold=True)
-        
-        hrStop = click.style(datetime.fromtimestamp(round(time())).strftime('%H:%M'), fg='red', bold=True )
-        tags = click.style(' '.join(str(t) for t in response["tags"]), fg='green')
-        runtime = click.style(f"{response['elapsedHour']:02}:{response['elapsedMin']:02}", fg="green", bold = True)
+        project = click.style(ts.project, fg='blue', bold=True)
+        tags = click.style(' '.join(str(t) for t in ts.tags), fg='green')
+
+        hrStop = click.style(ts.end_dt.strftime('%H:%M'), fg='red', bold=True )
+        dur = ts.getDurationHR()
+        runtime = click.style(f"{dur['hh']:02}:{dur['M']:02}", fg="green", bold = True)
 
         click.echo(f"{project} stopped at {hrStop}")
         click.echo(f"Tags: {tags}")
@@ -107,6 +108,7 @@ def status(ctx):
 )
 @click.option("-p", "--projects", is_flag=True, default=False, help="Display projects")
 @click.option("-t", "--tags", is_flag=True, default=False, help="Display tags")
+# TODO: Display all timeslots using -a
 @click.pass_context
 def ls(ctx, to, from_, categories, projects, tags):
     """Lists timeslots"""
@@ -158,6 +160,9 @@ def ls(ctx, to, from_, categories, projects, tags):
     else:
         timeslots = jkt.getTimeslots()
 
+    # Want timeslots sorted chronologically
+    timeslots.reverse()
+
     for i in range(len(timeslots)):
         if i == 10:
             click.echo(f"{len(timeslots)-i} timeslots not shown.")
@@ -166,12 +171,12 @@ def ls(ctx, to, from_, categories, projects, tags):
         ts = timeslots[i]
 
         # Define all styles and shown data
-        ts_id = click.style(ts['id'], fg='yellow')
-        ts_project = click.style(ts['project'], fg='blue', bold=True)
+        ts_id = click.style(ts.id, fg='yellow')
+        ts_project = click.style(ts.project, fg='blue', bold=True)
         
         # Make sure time is readable and makes sense
-        ts_start = datetime.fromtimestamp(ts['start'])
-        ts_end = datetime.fromtimestamp(ts['end'])
+        ts_start = ts.start_dt
+        ts_end = ts.end_dt
 
         if ts_start.date() == ts_end.date():
             ts_start_hr = ts_start.strftime("%H:%M")
@@ -180,11 +185,11 @@ def ls(ctx, to, from_, categories, projects, tags):
 
         ts_end_hr = ts_end.strftime("%H:%M %d-%m-%y")
 
-        s = str(ts_end - ts_start).split(":")
+        s = str(ts.duration).split(":")
         ts_duration = click.style(f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}", fg='green')
 
 
-        ts_tags = click.style(' '.join(str(t) for t in ts['tags']), fg='green')
+        ts_tags = click.style(' '.join(str(t) for t in ts.tags), fg='green')
 
         # Display data on single line
         click.echo(
@@ -230,9 +235,14 @@ def edit(index):
 
 
 @cli.command()
-def report():
+@click.pass_context
+def report(ctx):
     """Generates reports from timetracker data"""
-    pass
+    jkt = ctx.obj['jakt']
+
+    response = jkt.report()
+
+    click.echo(response)
 
 
 @cli.command()
