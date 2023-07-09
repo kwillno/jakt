@@ -23,6 +23,9 @@ class JaktPathError(JaktError):
 	def __init__(self, path):
 		self.path = path
 
+class JaktInputError(JaktError):
+	pass
+
 
 class timeslot:
 	def __init__(self, ID: str, start: int, end: int, project: str, tags: list[str]):
@@ -42,7 +45,7 @@ class timeslot:
 		self.duration = end - start
 
 	def __str__(self):
-		return f"<ts: {self.id} {self.project} {self.tags} {self.start.strftime('%d-%m-%y %H:%M')}>"
+		return f"ts: {self.id} {self.project} {self.tags} {self.start_dt.strftime('%d-%m-%y %H:%M')} - {self.end_dt.strftime('%H:%M')}"
 
 
 	@classmethod
@@ -86,13 +89,13 @@ class JaktReport:
 			projectDuration = timedelta(0)
 
 			tags = jkt.getTags(project=project)
+
 			for j in range(len(tags)):
 				timeslots = jkt.getTimeslots(project=project, tag=tags[j])
 
 				tagDuration = timedelta(0)
 				for ts in timeslots:
 					tagDuration += ts.duration
-					projectDuration += ts.duration
 
 				tagobj = {
 					'tag': tags[j],
@@ -101,6 +104,11 @@ class JaktReport:
 				}
 
 				tags[j] = tagobj
+
+			# Calculate project duration
+			timeslots = jkt.getTimeslots(project=project)
+			for ts in timeslots:
+				projectDuration += ts.duration
 
 			projectObj = {
 				'project': project,
@@ -118,7 +126,7 @@ class JaktReport:
 		s = str(td).split(':')
 		return f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}"
 
-	def getProjectReport(self):
+	def getProjectReport(self) -> list[dict]:
 		report = []
 		for proj in self.data:
 			proj_report = {
@@ -126,6 +134,29 @@ class JaktReport:
 				'time': self.hrDuration(proj['time'])
 			}
 			report.append(proj_report)
+
+		return report
+
+	def getTagReport(self, project:str  = False) -> list[dict]:
+		"""
+		Returns a report of all tags for a given project
+		"""
+		if not project:
+			raise JaktInputError
+
+		# Find project that matches given project string
+		for proj in self.data:
+			if proj["project"] == project:
+				selectedProject = proj
+
+		# Generate report
+		report = []
+		for tag in selectedProject["tags"]:
+			tag_report = {
+				'tag': tag['tag'],
+				'time': self.hrDuration(tag['time'])
+			}
+			report.append(tag_report)
 
 		return report
 
@@ -173,6 +204,9 @@ class _jakt:
 
 		if os.path.exists(self.pathCurrent):
 			raise JaktActiveError
+
+		if tags == ():
+			tags = ['<no tags>']
 
 		timeslot = {
 			"start": round(time()),

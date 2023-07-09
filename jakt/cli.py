@@ -1,7 +1,7 @@
 import click
 from datetime import datetime
 from time import time
-from jakt.jakt import _jakt, timeslot, JaktReport, JaktError, JaktActiveError, JaktNotActiveError
+from jakt.jakt import _jakt, timeslot, JaktReport, JaktError, JaktActiveError, JaktNotActiveError, JaktInputError
 
 
 @click.group()
@@ -33,7 +33,7 @@ def start(ctx, project, tags):
 
         project = click.style(project, fg='blue', bold=True)
         hrStart = click.style(datetime.fromtimestamp(response["start"]).strftime('%H:%M'), fg='red', bold=True )
-        tags = click.style(' '.join(str(t) for t in tags), fg='green')
+        tags = click.style(' '.join(str(t) for t in response['tags']), fg='green')
 
         click.echo(f"{project} started at {hrStart}")
         click.echo(f"Tags: {tags}")
@@ -241,9 +241,22 @@ def report(ctx):
     jkt = ctx.obj['jakt']
 
     jkt_report = jkt.report()
+    
     projects = jkt_report.getProjectReport()
+
     for project in projects:
-        click.echo(f"{project['project']}  {project['time']}")
+
+        hrProject = click.style(project['project'], fg='blue', bold=True)
+        hrTime = click.style(project['time'], fg='red', bold=True)
+        click.echo(f"{hrProject}  {hrTime}")
+
+        tags = jkt_report.getTagReport(project['project'])
+        for tag in tags:
+
+            hrTag = click.style(tag['tag'], fg='green', bold=True)
+            hrTagTime = click.style(tag['time'], fg='yellow')
+
+            click.echo(f" - {hrTag}  {hrTagTime}")
 
 
 @cli.command()
