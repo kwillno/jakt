@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import click
 
 class JaktReport:
 	def __init__(self, jkt):
@@ -49,18 +50,23 @@ class JaktReport:
 		s = str(td).split(':')
 		return f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}"
 
-	def getProjectReport(self) -> list[dict]:
+	def getProjectReport(self, project:str = "") -> list[dict]:
 		report = []
 		for proj in self.data:
 			proj_report = {
 				'project': proj['project'],
 				'time': self.hrDuration(proj['time'])
 			}
+
+			if project:
+				if proj['project'] == project:
+					report.append(proj_report)
+				continue
 			report.append(proj_report)
 
 		return report
 
-	def getTagReport(self, project:str  = False) -> list[dict]:
+	def getTagReport(self, project:str  = "") -> list[dict]:
 		"""
 		Returns a report of all tags for a given project
 		"""
@@ -74,10 +80,10 @@ class JaktReport:
 
 		# Generate report
 		report = []
-		for tag in selectedProject["tags"]:
+		for tg in selectedProject["tags"]:
 			tag_report = {
-				'tag': tag['tag'],
-				'time': self.hrDuration(tag['time'])
+				'tag': tg['tag'],
+				'time': self.hrDuration(tg['time'])
 			}
 			report.append(tag_report)
 

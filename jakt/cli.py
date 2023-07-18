@@ -235,14 +235,19 @@ def edit(index):
 
 
 @cli.command()
+@click.option("-p", "--project", default="", help="Show only specified project")
+@click.option("-t", "--tag", default="", help="Show only specified tag")
 @click.pass_context
-def report(ctx):
+def report(ctx, project, tag):
     """Generates reports from timetracker data"""
     jkt = ctx.obj['jakt']
 
     jkt_report = jkt.report()
-    
-    projects = jkt_report.getProjectReport()
+
+    if project:
+        projects = jkt_report.getProjectReport(project=project)
+    else:
+        projects = jkt_report.getProjectReport()
 
     for project in projects:
 
