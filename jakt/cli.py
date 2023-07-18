@@ -1,11 +1,11 @@
 import click
 from datetime import datetime
-from time import time
-from jakt.jakt import _jakt, timeslot, JaktReport, JaktError, JaktActiveError, JaktNotActiveError, JaktInputError
 
+from .__init__ import jakt
+from .exceptions import *
 
 @click.group()
-@click.version_option(version="0.0.2", prog_name="jakt")
+@click.version_option(version="0.0.3", prog_name="jakt")
 @click.pass_context
 def cli(ctx):
     """Jakt is just another (k)ommandline timetracker.
@@ -16,7 +16,7 @@ def cli(ctx):
     accountable while working, jakt is the perfect tool."""
 
     ctx.ensure_object(dict)
-    ctx.obj['jakt'] = _jakt()
+    ctx.obj['jakt'] = jakt()
     
 
 
