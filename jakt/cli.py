@@ -2,6 +2,7 @@ import click
 from datetime import datetime
 
 from .__init__ import jakt
+from .timeslot import timeslot
 from .exceptions import *
 
 @click.group()
@@ -194,36 +195,39 @@ def ls(ctx, to, from_, categories, projects, tags):
         # Display data on single line
         click.echo(
             f"{ts_id} {ts_duration} ({ts_start_hr} - {ts_end_hr}) {ts_project} {ts_tags}")
-        #click.echo(ts)
 
 
-
-'''@click.option(
-    "-t",
+@cli.command()
+@click.option(
     "--to",
     "to",
-    type=click.DateTime(formats=["%d-%m-%Y %H:%M:%S", "%H:%M:%S"]),
-    help="Starttime of search period",
+    type=click.DateTime(formats=["%d-%m-%y %H:%M", "%d-%m-%y %H:%M:%S"]),
+    help="Starttime",
+    required=True,
 )
 @click.option(
-    "-f",
     "--from",
     "from_",
-    type=click.DateTime(formats=["%d-%m-%Y %H:%M:%S", "%H:%M:%S"]),
-    help="Endtime of search period",
+    type=click.DateTime(formats=["%d-%m-%y %H:%M", "%d-%m-%y %H:%M:%S"]),
+    help="Endtime",
+    required=True,
 )
-@click.option(
-    "-c", "--categories", is_flag=True, default=False, help="Display categories"
-)
-@click.option("-p", "--projects", is_flag=True, default=False, help="Display projects")
-@click.option("-t", "--tags", is_flag=True, default=False, help="Display tags")'''
-@cli.command()
+@click.argument("project")
+@click.argument("tags", nargs = -1)
 @click.pass_context
-def add(ctx):
+def add(ctx, to, from_, project, tags):
     """Add a timeslot that was not logged live"""
     jkt = ctx.obj['jakt']
 
-    jkt.add()
+    ts = timeslot(
+        ID=jkt.generateUniqueID(),
+        start= int(from_.strftime('%s')),
+        end= int(to.strftime('%s')),
+        project=project,
+        tags=tags
+    )
+
+    jkt.add(ts)
     
 
 
