@@ -20,12 +20,17 @@ class timeslot:
 	def __str__(self):
 		return f"ts: {self.id} {self.project} {self.tags} {self.start_dt.strftime('%d-%m-%y %H:%M')} - {self.end_dt.strftime('%H:%M')}"
 
-
 	@classmethod
 	def from_json(cls, json_obj: dict):
+		"""
+		Initialize a timeslot directly from a dictionary object.
+		"""
 		return cls( ID=json_obj['id'], start=json_obj['start'], end=json_obj['end'], project=json_obj['project'], tags=json_obj['tags'])
 
 	def toDict(self) -> dict:
+		"""
+		Returns a dictionary of the timeslot
+		"""
 		obj = {
 			'id': self.id,
 			'start': self.start,
@@ -48,3 +53,22 @@ class timeslot:
 			M = mm + 1
 
 		return {'hh':hh, 'H': hh, "mm": mm, 'M': M, "ss": ss}
+
+	def toHR(self):
+		"""
+		Returns timeslot in interface friendly format
+		"""
+
+		tags_hr = ' '.join(str(t) for t in self.tags)
+
+		# Make sure time is readable and makes sense
+		if self.start_dt.date() == self.end_dt.date():
+			start_hr = self.start_dt.strftime("%H:%M")
+		else:
+			start_hr = self.start_dt.strftime("%H:%M %d-%m-%y")
+
+		end_hr = self.end_dt.strftime("%H:%M %d-%m-%y")
+
+		returnString = f"{self.id} {self.duration} ({start_hr} - {end_hr}) {self.project} {tags_hr}"		
+		
+		return returnString
