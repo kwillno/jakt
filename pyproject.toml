@@ -9,7 +9,7 @@ version = "0.0.3"
 authors = [
   { name="kwillno", email="kristian@kwill.no" },
 ]
-description = "Just another timetracker"
+description = "Just another (k)ommandline timetracker"
 readme = "README.md"
 requires-python = ">=3.7"
 classifiers = [

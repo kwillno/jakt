@@ -4,16 +4,17 @@ class JaktError(Exception):
 
 
 class JaktActiveError(JaktError):
-	pass
+    pass
 
 
 class JaktNotActiveError(JaktError):
-	pass
+    pass
+
 
 class JaktPathError(JaktError):
+    def __init__(self, path):
+        self.path = path
 
-	def __init__(self, path):
-		self.path = path
 
 class JaktInputError(JaktError):
-	pass
+    pass

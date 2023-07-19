@@ -5,6 +5,7 @@ from .__init__ import jakt
 from .timeslot import timeslot
 from .exceptions import *
 
+
 @click.group()
 @click.version_option(version="0.0.3", prog_name="jakt")
 @click.pass_context
@@ -17,49 +18,51 @@ def cli(ctx):
     accountable while working, jakt is the perfect tool."""
 
     ctx.ensure_object(dict)
-    ctx.obj['jakt'] = jakt()
-    
+    ctx.obj["jakt"] = jakt()
 
 
 @cli.command()
 @click.argument("project")
-@click.argument("tags", nargs = -1)
+@click.argument("tags", nargs=-1)
 @click.pass_context
 def start(ctx, project, tags):
     """Start a new timeslot"""
-    jkt = ctx.obj['jakt']
+    jkt = ctx.obj["jakt"]
 
     try:
         response = jkt.start(project=project, tags=tags)
 
-        project = click.style(project, fg='blue', bold=True)
-        hrStart = click.style(datetime.fromtimestamp(response["start"]).strftime('%H:%M'), fg='red', bold=True )
-        tags = click.style(' '.join(str(t) for t in response['tags']), fg='green')
+        project = click.style(project, fg="blue", bold=True)
+        hrStart = click.style(
+            datetime.fromtimestamp(response["start"]).strftime("%H:%M"),
+            fg="red",
+            bold=True,
+        )
+        tags = click.style(" ".join(str(t) for t in response["tags"]), fg="green")
 
         click.echo(f"{project} started at {hrStart}")
         click.echo(f"Tags: {tags}")
 
-
     except JaktActiveError:
-
         click.echo("Other timer already running")
         ctx.invoke(status)
+
 
 @cli.command()
 @click.pass_context
 def stop(ctx):
     """Stops current project"""
-    jkt = ctx.obj['jakt']
+    jkt = ctx.obj["jakt"]
 
     try:
         ts = jkt.stop()
 
-        project = click.style(ts.project, fg='blue', bold=True)
-        tags = click.style(' '.join(str(t) for t in ts.tags), fg='green')
+        project = click.style(ts.project, fg="blue", bold=True)
+        tags = click.style(" ".join(str(t) for t in ts.tags), fg="green")
 
-        hrStop = click.style(ts.end_dt.strftime('%H:%M'), fg='red', bold=True )
+        hrStop = click.style(ts.end_dt.strftime("%H:%M"), fg="red", bold=True)
         dur = ts.getDurationHR()
-        runtime = click.style(f"{dur['hh']:02}:{dur['M']:02}", fg="green", bold = True)
+        runtime = click.style(f"{dur['hh']:02}:{dur['M']:02}", fg="green", bold=True)
 
         click.echo(f"{project} stopped at {hrStop}")
         click.echo(f"Tags: {tags}")
@@ -73,15 +76,23 @@ def stop(ctx):
 @click.pass_context
 def status(ctx):
     """Displays current status"""
-    jkt = ctx.obj['jakt']
+    jkt = ctx.obj["jakt"]
 
     try:
         response = jkt.status()
 
-        project = click.style(response["project"], fg='blue', bold=True)
-        hrStart = click.style(datetime.fromtimestamp(response["start"]).strftime('%H:%M'), fg='red', bold=True )
-        tags = click.style(' '.join(str(t) for t in response["tags"]), fg='green')
-        runtime = click.style(f"{response['elapsedHour']:02}:{response['elapsedMin']:02}", fg="green", bold = True)
+        project = click.style(response["project"], fg="blue", bold=True)
+        hrStart = click.style(
+            datetime.fromtimestamp(response["start"]).strftime("%H:%M"),
+            fg="red",
+            bold=True,
+        )
+        tags = click.style(" ".join(str(t) for t in response["tags"]), fg="green")
+        runtime = click.style(
+            f"{response['elapsedHour']:02}:{response['elapsedMin']:02}",
+            fg="green",
+            bold=True,
+        )
 
         click.echo(f"{project} started at {hrStart}.")
         click.echo(f"Tags: {tags}")
@@ -113,8 +124,7 @@ def status(ctx):
 @click.pass_context
 def ls(ctx, to, from_, categories, projects, tags):
     """Lists timeslots and other data"""
-    jkt = ctx.obj['jakt']
-
+    jkt = ctx.obj["jakt"]
 
     if categories:
         categories = jkt.getCategories()
@@ -140,7 +150,6 @@ def ls(ctx, to, from_, categories, projects, tags):
 
         return
 
-
     if from_ or to:
         # A few cases of input sanitation
         if from_ and (not to):
@@ -148,7 +157,7 @@ def ls(ctx, to, from_, categories, projects, tags):
 
         elif to and (not from_):
             click.echo("--from must be set if --to is set")
-            return 
+            return
 
         if from_ > to:
             # Switch the parameters if they are given in the wrong order
@@ -172,9 +181,9 @@ def ls(ctx, to, from_, categories, projects, tags):
         ts = timeslots[i]
 
         # Define all styles and shown data
-        ts_id = click.style(ts.id, fg='yellow')
-        ts_project = click.style(ts.project, fg='blue', bold=True)
-        
+        ts_id = click.style(ts.id, fg="yellow")
+        ts_project = click.style(ts.project, fg="blue", bold=True)
+
         # Make sure time is readable and makes sense
         ts_start = ts.start_dt
         ts_end = ts.end_dt
@@ -187,14 +196,16 @@ def ls(ctx, to, from_, categories, projects, tags):
         ts_end_hr = ts_end.strftime("%H:%M %d-%m-%y")
 
         s = str(ts.duration).split(":")
-        ts_duration = click.style(f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}", fg='green')
+        ts_duration = click.style(
+            f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}", fg="green"
+        )
 
-
-        ts_tags = click.style(' '.join(str(t) for t in ts.tags), fg='green')
+        ts_tags = click.style(" ".join(str(t) for t in ts.tags), fg="green")
 
         # Display data on single line
         click.echo(
-            f"{ts_id} {ts_duration} ({ts_start_hr} - {ts_end_hr}) {ts_project} {ts_tags}")
+            f"{ts_id} {ts_duration} ({ts_start_hr} - {ts_end_hr}) {ts_project} {ts_tags}"
+        )
 
 
 @cli.command()
@@ -213,29 +224,30 @@ def ls(ctx, to, from_, categories, projects, tags):
     required=True,
 )
 @click.argument("project")
-@click.argument("tags", nargs = -1)
+@click.argument("tags", nargs=-1)
 @click.pass_context
 def add(ctx, to, from_, project, tags):
     """Add a timeslot that was not logged live"""
-    jkt = ctx.obj['jakt']
+    jkt = ctx.obj["jakt"]
 
     ts = timeslot(
         ID=jkt.generateUniqueID(),
-        start= int(from_.strftime('%s')),
-        end= int(to.strftime('%s')),
+        start=int(from_.strftime("%s")),
+        end=int(to.strftime("%s")),
         project=project,
-        tags=tags
+        tags=tags,
     )
 
     jkt.add(ts)
-    
 
 
+"""
 @cli.command()
 @click.argument("index")
 def edit(index):
-    """Edits categories, projects, tags and timeslots"""
+    # Edits categories, projects, tags and timeslots
     pass
+"""
 
 
 @cli.command()
@@ -244,7 +256,7 @@ def edit(index):
 @click.pass_context
 def report(ctx, project, tag):
     """Generates reports from timetracker data"""
-    jkt = ctx.obj['jakt']
+    jkt = ctx.obj["jakt"]
 
     jkt_report = jkt.report()
 
@@ -254,47 +266,47 @@ def report(ctx, project, tag):
         projects = jkt_report.getProjectReport()
 
     for project in projects:
-
-        hrProject = click.style(project['project'], fg='blue', bold=True)
-        hrTime = click.style(project['time'], fg='red', bold=True)
+        hrProject = click.style(project["project"], fg="blue", bold=True)
+        hrTime = click.style(project["time"], fg="red", bold=True)
         click.echo(f"{hrProject}  {hrTime}")
 
-        tags = jkt_report.getTagReport(project['project'])
+        tags = jkt_report.getTagReport(project["project"])
         for tag in tags:
-
-            hrTag = click.style(tag['tag'], fg='green', bold=True)
-            hrTagTime = click.style(tag['time'], fg='yellow')
+            hrTag = click.style(tag["tag"], fg="green", bold=True)
+            hrTagTime = click.style(tag["time"], fg="yellow")
 
             click.echo(f" - {hrTag}  {hrTagTime}")
 
 
+"""
 @cli.command()
 def pause():
-    """Takes a break in current timeslot"""
+    # Takes a break in current timeslot
     pass
 
 
 @cli.command()
 def resume():
-    """Resumes paused timeslot"""
+    # Resumes paused timeslot
     pass
 
 
 @cli.command()
 def config():
-    """Sets new values in configuration file"""
+    # Sets new values in configuration file
     pass
 
 
 @cli.command()
 def sync():
-    """Syncronizes data with server"""
+    # Syncronizes data with server
     pass
 
 @cli.command()
 def license():
-    """Outputs license"""
+    # Outputs license
     pass
+"""
 
 if __name__ == "__main__":
     cli(obj={})
