@@ -32,13 +32,13 @@ def start(ctx, project, tags):
     try:
         response = jkt.start(project=project, tags=tags)
 
-        project = click.style(project, fg="blue", bold=True)
+        project = click.style(response.project, fg="blue", bold=True)
         hrStart = click.style(
-            datetime.fromtimestamp(response["start"]).strftime("%H:%M"),
+            datetime.fromtimestamp(response.start).strftime("%H:%M"),
             fg="red",
             bold=True,
         )
-        tags = click.style(" ".join(str(t) for t in response["tags"]), fg="green")
+        tags = click.style(" ".join(str(t) for t in response.tags), fg="green")
 
         click.echo(f"{project} started at {hrStart}")
         click.echo(f"Tags: {tags}")
@@ -278,18 +278,39 @@ def report(ctx, project, tag):
             click.echo(f" - {hrTag}  {hrTagTime}")
 
 
+
+@cli.command()
+@click.pass_context
+def resume(ctx):
+    """
+    Start new timeslot with same settings
+    """
+    jkt = ctx.obj["jakt"]
+
+    try:
+        response = jkt.resume()
+
+        project = click.style(response.project, fg="blue", bold=True)
+        hrStart = click.style(
+            datetime.fromtimestamp(response.start).strftime("%H:%M"),
+            fg="red",
+            bold=True,
+        )
+        tags = click.style(" ".join(str(t) for t in response.tags), fg="green")
+
+        click.echo(f"{project} started at {hrStart}")
+        click.echo(f"Tags: {tags}")
+
+    except JaktActiveError:
+        click.echo("Other timer already running")
+        ctx.invoke(status)
+
+
 """
 @cli.command()
 def pause():
     # Takes a break in current timeslot
     pass
-
-
-@cli.command()
-def resume():
-    # Resumes paused timeslot
-    pass
-
 
 @cli.command()
 def config():

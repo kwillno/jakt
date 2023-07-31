@@ -59,15 +59,19 @@ class jakt:
         if tags == ():
             tags = ["<no tags>"]
 
-        timeslot = {"start": round(time()), "project": project, "tags": tags}
-
-        timeslotJSON = json.dumps(timeslot, indent=4)
+        ts = timeslot(
+            ID=self.generateUniqueID(),
+            start=round(time()),
+            end=None,
+            project=project,
+            tags=tags
+        )
 
         with open(self.pathCurrent, "w") as f:
-            f.write(timeslotJSON)
+            f.write(str(ts.toDictString()))
             f.close()
 
-        return timeslot
+        return ts
 
     def stop(self) -> timeslot:
         if not os.path.exists(self.pathCurrent):
@@ -142,6 +146,21 @@ class jakt:
         """
 
         return JaktReport(self)
+
+    def resume(self) -> timeslot:
+    	"""
+    	Starts new timeslot with same options as previously logged timeslot
+    	"""
+
+    	# Get last logged timeslot
+    	timeslots = self.getTimeslots()
+    	timeslots.reverse()
+    	last_ts = timeslots[0]
+
+    	response = self.start(project = last_ts.project, tags = last_ts.tags)
+
+    	return response
+
 
     ## Get and put data
     def getCategories(self) -> list[str]:

@@ -1,4 +1,5 @@
 from datetime import datetime
+import json
 
 
 class timeslot:
@@ -8,15 +9,20 @@ class timeslot:
         self.start = start
         self.end = end
         self.start_dt = datetime.fromtimestamp(self.start)
-        self.end_dt = datetime.fromtimestamp(self.end)
+        if end:
+            self.end_dt = datetime.fromtimestamp(self.end)
+
+            start = datetime.fromtimestamp(self.start)
+            end = datetime.fromtimestamp(self.end)
+            self.duration = end - start
+
+        else:
+            self.end_dt = None
+            self.duration = None
 
         self.project = project
         self.tags = tags
-
-        # Calculate duration
-        start = datetime.fromtimestamp(self.start)
-        end = datetime.fromtimestamp(self.end)
-        self.duration = end - start
+        
 
     def __str__(self):
         return f"ts: {self.id} {self.project} {self.tags} {self.start_dt.strftime('%d-%m-%y %H:%M')} - {self.end_dt.strftime('%H:%M')}"
@@ -47,6 +53,13 @@ class timeslot:
         }
 
         return obj
+
+    def toDictString(self) -> str:
+        """
+        Returns a JSON-string
+        """
+
+        return json.dumps(self.toDict())
 
     def getDurationHR(self):
         """
