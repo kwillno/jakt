@@ -7,7 +7,7 @@ from .exceptions import *
 
 
 @click.group()
-@click.version_option(version="0.0.4", prog_name="jakt")
+@click.version_option(version="0.0.5", prog_name="jakt")
 @click.pass_context
 def cli(ctx):
     """Jakt is just another (k)ommandline timetracker.

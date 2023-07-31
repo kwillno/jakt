@@ -217,9 +217,12 @@ class jakt:
         Returns a list of logged timeslots
         """
         try:
-            with open(self.pathTimeslots, "r") as f:
-                timeslots = json.load(f)
-                f.close()
+       	    try:
+                with open(self.pathTimeslots, "r") as f:
+                    timeslots = json.load(f)
+                    f.close()
+            except json.JSONDecodeError:
+                return[]
 
             # Create timeslot instances
             for i in range(len(timeslots)):
