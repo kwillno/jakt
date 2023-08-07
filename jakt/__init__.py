@@ -13,10 +13,10 @@ from .exceptions import *
 
 class jakt:
     def __init__(self):
-        # TODO: Set up config
         # TODO: Read from config path and set variables
 
         self.dataPath = os.path.join(os.path.expanduser("~"), ".jakt")
+
         self.pathConfig = os.path.join(self.dataPath, "config.yml")
         self.pathCategories = os.path.join(self.dataPath, "categories.yml")
         self.pathProjects = os.path.join(self.dataPath, "projects.json")
@@ -25,27 +25,49 @@ class jakt:
 
         # Standard setup for first time use.
         if not os.path.exists(self.dataPath):
-            os.mkdir(self.dataPath)
+        	self.setup()
 
-            # Create standard files
-            paths = [
-                self.pathConfig,
-                self.pathCategories,
-                self.pathProjects,
-                self.pathTimeslots,
-            ]
+        with open(self.pathConfig, "r") as f:
+            self.config = yaml.safe_load(f)
 
-            for path in paths:
-                # Create standard config
-                f = open(path, "x")
-                f.close()
+        # Check if debug mode is enabled
+        # If it is, redirect file-operations to subfolder
+        if self.config["debug"]:
+            self.dataPath = os.path.join(self.dataPath, "debug")
 
-            standardConfig = {"Remote": False}
-            with open(self.pathConfig, "a") as f:
-                yaml.dump(standardConfig, f, default_flow_style=False)
-        else:
-            # TODO: Set up config-loading
-            pass
+            self.pathCategories = os.path.join(self.dataPath, "categories.yml")
+            self.pathProjects = os.path.join(self.dataPath, "projects.json")
+            self.pathTimeslots = os.path.join(self.dataPath, "timeslots.json")
+            self.pathCurrent = os.path.join(self.dataPath, "current.json")
+
+            if not os.path.exists(self.dataPath):
+                self.setup()
+
+    def setup(self):
+        """
+        Performs first time setup
+        """
+        os.mkdir(self.dataPath)
+
+        # Create standard files
+        paths = [
+            self.pathConfig,
+            self.pathCategories,
+            self.pathProjects,
+            self.pathTimeslots,
+        ]
+
+        for path in paths:
+            f = open(path, "x")
+            f.close()
+
+        # Create barebones config
+        config = {
+            "remote": False,
+            "debug": False,
+        }
+        with open(self.pathConfig, "a") as f:
+            yaml.dump(config, f, default_flow_style=True)
 
     ## Main working functions
     def start(self, project: str, tags: list[str]) -> dict:
