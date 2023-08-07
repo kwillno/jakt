@@ -20,6 +20,9 @@ def cli(ctx):
     ctx.ensure_object(dict)
     ctx.obj["jakt"] = jakt()
 
+    if ctx.obj["jakt"].getConfig()['debug']:
+        click.echo("Debug mode is enabled")
+
 
 @cli.command()
 @click.argument("project")
@@ -305,13 +308,67 @@ def resume(ctx):
         click.echo("Other timer already running")
         ctx.invoke(status)
 
+@cli.command()
+@click.argument("key", required=False)
+@click.argument("value", required=False)
+@click.pass_context
+def config(ctx, key:str = None, value:str = None):
+    """
+    Interacts with config
+    """
+    jkt = ctx.obj["jakt"]
+
+    config = jkt.getConfig()
+
+    # If key and value are set
+    # change or add this in config
+    if key and value:
+        if value.lower() == 'false':
+            config[key] = False
+        elif value.lower() == 'true':
+            config[key] = True
+        else:
+            config[key] = value
+
+        try:
+            jkt.putConfig(config)
+
+        except JaktError:
+            click.echo("An error has occured.")
+
+    else:
+        click.echo(config)
+
+
+@cli.command()
+@click.argument("state", type=bool, required=False)
+@click.pass_context
+def debug(ctx, state: bool = None):
+    """
+    Enables and disables debug mode
+    """
+    jkt = ctx.obj["jakt"]
+
+    config = jkt.getConfig()
+        
+    if state != None:
+        config['debug'] = state
+
+    else:
+        if config['debug']:
+            config['debug'] = False
+        else:
+            config['debug'] = True
+            
+    jkt.putConfig(config)
+
+    config = jkt.getConfig()
+    if config['debug']:
+        click.echo("Debug mode has been enabled!")
+    else:
+       click.echo("Debug mode has been disbled!")
 
 """
-@cli.command()
-def pause():
-    # Takes a break in current timeslot
-    pass
-
 @cli.command()
 def config():
     # Sets new values in configuration file

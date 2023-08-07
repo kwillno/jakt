@@ -12,7 +12,7 @@ from .exceptions import *
 
 
 class jakt:
-    def __init__(self):
+    def __init__(self) -> None:
         # TODO: Read from config path and set variables
 
         self.dataPath = os.path.join(os.path.expanduser("~"), ".jakt")
@@ -43,7 +43,7 @@ class jakt:
             if not os.path.exists(self.dataPath):
                 self.setup()
 
-    def setup(self):
+    def setup(self) -> None:
         """
         Performs first time setup
         """
@@ -185,6 +185,19 @@ class jakt:
 
 
     ## Get and put data
+    def getConfig(self) -> dict:
+        return self.config
+
+    def putConfig(self, config : dict = None) -> None:
+        if not config:
+            config = self.getConfig()
+
+        with open(self.pathConfig, "w") as f:
+            yaml.dump(config, f, default_flow_style=True)
+
+        return
+
+
     def getCategories(self) -> list[str]:
         """
         Returns a list of all defined categories
@@ -286,7 +299,7 @@ class jakt:
 
         return False
 
-    def putTimeslots(self, timeslots: list[timeslot]):
+    def putTimeslots(self, timeslots: list[timeslot]) -> None:
         obj_list = []
 
         for ts in timeslots:
@@ -300,14 +313,14 @@ class jakt:
             raise JaktPathError(self.pathTimeslots)
 
     ## Helper functions
-    def generateUniqueID(self):
+    def generateUniqueID(self) -> str:
         timeslots = self.getTimeslots()
 
         usedIDs = []
         for ts in timeslots:
             usedIDs.append(ts.id)
 
-        ID = "%08x" % random.randrange(16**8)
+        ID = f"{random.randrange(16**8):08x}"
         if ID not in usedIDs:
             return ID
         else:
