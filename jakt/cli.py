@@ -392,8 +392,7 @@ def debug(ctx, state: bool = None):
 @click.pass_context
 def export(ctx, path):
     """
-    Enables and disables debug mode.
-    Path of export file must end with '.csv'
+    Exports all timeslots to given .csv file
     """
     jkt = ctx.obj["jakt"]
 
@@ -403,13 +402,27 @@ def export(ctx, path):
         click.echo(f"JaktPathError: {e}")
 
 
-"""
 @cli.command()
-def config():
-    # Sets new values in configuration file
-    pass
+@click.argument("path", type=str, required=False, default=None)
+@click.option("-f", "--format","_format", default="jakt", help="Format of the file you are trying to import")
+@click.pass_context
+def source(ctx, path, _format):
+    """
+    Imports timeslots from given .csv file
+    """
+    jkt = ctx.obj["jakt"]
 
+    try:
+        if _format != "jakt":
+            jkt.importTT(path=path)
+            return
+        
+        jkt.importInternal(path=path, _format=_format)
 
+    except JaktPathError as e:
+        click.echo(f"JaktPathError: {e}")
+
+"""
 @cli.command()
 def sync():
     # Syncronizes data with server
