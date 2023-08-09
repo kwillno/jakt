@@ -386,6 +386,23 @@ def debug(ctx, state: bool = None):
     else:
        click.echo("Debug mode has been disbled!")
 
+
+@cli.command()
+@click.argument("path", type=str, required=False, default=None)
+@click.pass_context
+def export(ctx, path):
+    """
+    Enables and disables debug mode.
+    Path of export file must end with '.csv'
+    """
+    jkt = ctx.obj["jakt"]
+
+    try:
+        jkt.export(path=path)
+    except JaktPathError as e:
+        click.echo(f"JaktPathError: {e}")
+
+
 """
 @cli.command()
 def config():

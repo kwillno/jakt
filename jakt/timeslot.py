@@ -92,3 +92,10 @@ class timeslot:
         returnString = f"{self.id} {self.duration} ({start_hr} - {end_hr}) {self.project} {tags_hr}"
 
         return returnString
+
+    def toCSV(self):
+        """
+        Creates a CSV line for a timeslot
+        """
+        return f"{self.id},{self.start},{self.end},{self.project},{self.tags}"
+

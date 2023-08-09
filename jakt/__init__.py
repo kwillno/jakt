@@ -338,3 +338,51 @@ class jakt:
 
     def push(self):
         pass
+
+    ## Import / Export
+
+    def toCSV(self, timeslots):
+        """
+        Returns list of CSV lineitems for all timeslots. 
+        """
+
+        csvLines = []
+
+        header = "id,start,end,project,tags"
+        csvLines.append(header)
+
+        for ts in timeslots:
+            csvLines.append(ts.toCSV())
+
+        return csvLines
+
+
+    def export(self, path:str = None):
+        """
+        Exports all timeslot data to a CSV file
+        """
+        if path is not None:
+            if path[-4:] != ".csv":
+                raise JaktPathError("Only CSV files are supported for now. Path must end with '.csv'")
+
+            if path[0] == "/":
+                raise JaktPathError("Absolute paths are not supported.")
+            else:
+                fullPath = os.path.join(os.getcwd(), path)
+        else:
+            fullPath = os.path.join(self.dataPath, "export.csv")
+
+        timeslots = self.getTimeslots()
+
+        csvItems = self.toCSV(timeslots)
+
+        with open(fullPath, "w") as f:
+            for item in csvItems:
+                f.write(f"{item}\n")
+            f.close()
+
+        return
+
+    def importCSV(self, csv_file):
+        pass
+
