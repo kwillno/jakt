@@ -207,6 +207,9 @@ class jakt:
                 categories = yaml.safe_load(f)
                 f.close()
 
+            if type(categories)==type(None):
+                categories = []
+
             return categories
         except OSError:
             raise JaktPathError(self.pathCategories)

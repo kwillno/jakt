@@ -7,7 +7,7 @@ from .exceptions import *
 
 
 @click.group()
-@click.version_option(version="0.0.5", prog_name="jakt")
+@click.version_option(version="0.0.5", prog_name="jakt (dev)")
 @click.pass_context
 def cli(ctx):
     """Jakt is just another (k)ommandline timetracker.
@@ -119,37 +119,50 @@ def status(ctx):
     help="Endtime of search period",
 )
 @click.option(
-    "-c", "--categories", is_flag=True, default=False, help="Display categories"
+    "-c",
+    "--category", 
+    is_flag=True, 
+    default=False, 
+    help="Display categories"
 )
 @click.option("-p", "--projects", is_flag=True, default=False, help="Display projects")
 @click.option("-t", "--tags", is_flag=True, default=False, help="Display tags")
-# TODO: Display all timeslots using -a
+@click.option("-a", "--all", "_all" ,is_flag=True, default=False, help="Display all elements")
 @click.pass_context
-def ls(ctx, to, from_, categories, projects, tags):
+def ls(ctx, to, from_, category, projects, tags, _all):
     """Lists timeslots and other data"""
     jkt = ctx.obj["jakt"]
 
-    if categories:
+    if category:
         categories = jkt.getCategories()
 
-        for cat in categories:
-            click.echo(f"{click.style(cat, fg='red', bold=True)}")
+        for i in range(len(categories)):
+            if i == 10 and not _all:
+                click.echo(f"{len(categories)-i} categories not shown.")
+                break
+            click.echo(f"{click.style(categories[i], fg='red', bold=True)}")
 
         return
 
     if projects:
         projects = jkt.getProjects()
 
-        for project in projects:
-            click.echo(f"{click.style(project, fg='blue', bold=True)}")
+        for i in range(len(projects)):
+            if i == 10 and not _all:
+                click.echo(f"{len(projects)-i} projects not shown.")
+                break
+            click.echo(f"{click.style(projects[i], fg='blue', bold=True)}")
 
         return
 
     if tags:
         tags = jkt.getTags()
 
-        for tag in tags:
-            click.echo(f"{click.style(tag, fg='green')}")
+        for i in range(len(tags)):
+            if i == 10 and not _all:
+                click.echo(f"{len(tags)-i} tags not shown.")
+                break
+            click.echo(f"{click.style(tags[i], fg='green')}")
 
         return
 
@@ -177,7 +190,7 @@ def ls(ctx, to, from_, categories, projects, tags):
     timeslots.reverse()
 
     for i in range(len(timeslots)):
-        if i == 10:
+        if i == 10 and not _all:
             click.echo(f"{len(timeslots)-i} timeslots not shown.")
             break
 
@@ -271,15 +284,20 @@ def report(ctx, project, tag):
     for project in projects:
         hrProject = click.style(project["project"], fg="blue", bold=True)
         hrTime = click.style(project["time"], fg="red", bold=True)
-        click.echo(f"{hrProject}  {hrTime}")
 
-        tags = jkt_report.getTagReport(project["project"])
-        for tag in tags:
-            hrTag = click.style(tag["tag"], fg="green", bold=True)
-            hrTagTime = click.style(tag["time"], fg="yellow")
+        if tag:
+            tgs = jkt_report.getTagReport(project["project"], tag=tag)
+        else:
+            tgs = jkt_report.getTagReport(project["project"])
+
+        if len(tgs)>0:
+            click.echo(f"{hrProject}  {hrTime}")
+
+        for tg in tgs:
+            hrTag = click.style(tg["tag"], fg="green", bold=True)
+            hrTagTime = click.style(tg["time"], fg="yellow")
 
             click.echo(f" - {hrTag}  {hrTagTime}")
-
 
 
 @cli.command()

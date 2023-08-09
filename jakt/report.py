@@ -58,7 +58,7 @@ class JaktReport:
 
         return report
 
-    def getTagReport(self, project: str = "") -> list[dict]:
+    def getTagReport(self, project: str = "", tag: str = "") -> list[dict]:
         """
         Returns a report of all tags for a given project
         """
@@ -73,6 +73,8 @@ class JaktReport:
         # Generate report
         report = []
         for tg in selectedProject["tags"]:
+            if tag and tg['tag'] != tag:
+                continue
             tag_report = {"tag": tg["tag"], "time": self.hrDuration(tg["time"])}
             report.append(tag_report)
 
