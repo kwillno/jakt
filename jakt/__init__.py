@@ -1,10 +1,11 @@
 import os
+from platformdirs import user_data_dir
 import yaml
 import json
-import random
+from random import randrange
 from datetime import datetime
 from time import time
-import click
+# import click
 
 from .timeslot import timeslot
 from .report import JaktReport
@@ -15,7 +16,7 @@ class jakt:
     def __init__(self) -> None:
         # TODO: Read from config path and set variables
 
-        self.dataPath = os.path.join(os.path.expanduser("~"), ".jakt")
+        self.dataPath = user_data_dir(appname="Jakt")
 
         self.pathConfig = os.path.join(self.dataPath, "config.yml")
         self.pathCategories = os.path.join(self.dataPath, "categories.yml")
@@ -41,9 +42,9 @@ class jakt:
             self.pathCurrent = os.path.join(self.dataPath, "current.json")
 
             if not os.path.exists(self.dataPath):
-                self.setup()
+                self.setup(setupConfig=False)
 
-    def setup(self) -> None:
+    def setup(self, setupConfig=True) -> None:
         """
         Performs first time setup
         """
@@ -51,23 +52,26 @@ class jakt:
 
         # Create standard files
         paths = [
-            self.pathConfig,
             self.pathCategories,
             self.pathProjects,
             self.pathTimeslots,
         ]
 
+        if setupConfig:
+            paths.append(self.pathConfig)
+
         for path in paths:
             f = open(path, "x")
             f.close()
 
-        # Create barebones config
-        config = {
-            "remote": False,
-            "debug": False,
-        }
-        with open(self.pathConfig, "a") as f:
-            yaml.dump(config, f, default_flow_style=True)
+        if setupConfig:
+            # Create barebones config
+            config = {
+                "remote": False,
+                "debug": False,
+            }
+            with open(self.pathConfig, "a") as f:
+                yaml.dump(config, f, default_flow_style=True)
 
     ## Main working functions
     def start(self, project: str, tags: list[str]) -> dict:
@@ -315,6 +319,10 @@ class jakt:
         except OSError:
             raise JaktPathError(self.pathTimeslots)
 
+    def getPath(self):
+        return self.dataPath
+
+
     ## Helper functions
     def generateUniqueID(self) -> str:
         timeslots = self.getTimeslots()
@@ -323,7 +331,7 @@ class jakt:
         for ts in timeslots:
             usedIDs.append(ts.id)
 
-        ID = f"{random.randrange(16**8):08x}"
+        ID = f"{randrange(16**8):08x}"
         if ID not in usedIDs:
             return ID
         else:

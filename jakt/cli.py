@@ -7,7 +7,7 @@ from .exceptions import *
 
 
 @click.group()
-@click.version_option(version="0.0.6", prog_name="jakt")
+@click.version_option(version="0.0.7", prog_name="jakt (dev)")
 @click.pass_context
 def cli(ctx):
     """Jakt is just another (k)ommandline timetracker.
@@ -421,6 +421,23 @@ def source(ctx, path, _format):
 
     except JaktPathError as e:
         click.echo(f"JaktPathError: {e}")
+
+
+@cli.command()
+@click.pass_context
+def path(ctx):
+    """
+    Returns path of stored data
+    """
+    jkt = ctx.obj["jakt"]
+
+    pathString = jkt.getPath()
+
+    # Escape whitespace in string
+    pathString = pathString.replace(" ", "\ ")
+
+    click.echo("Your jakt data is stored at:")
+    click.echo(pathString)
 
 """
 @cli.command()
