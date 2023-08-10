@@ -196,32 +196,7 @@ def ls(ctx, to, from_, category, projects, tags, _all):
 
         ts = timeslots[i]
 
-        # Define all styles and shown data
-        ts_id = click.style(ts.id, fg="yellow")
-        ts_project = click.style(ts.project, fg="blue", bold=True)
-
-        # Make sure time is readable and makes sense
-        ts_start = ts.start_dt
-        ts_end = ts.end_dt
-
-        if ts_start.date() == ts_end.date():
-            ts_start_hr = ts_start.strftime("%H:%M")
-        else:
-            ts_start_hr = ts_start.strftime("%H:%M %d-%m-%y")
-
-        ts_end_hr = ts_end.strftime("%H:%M %d-%m-%y")
-
-        s = str(ts.duration).split(":")
-        ts_duration = click.style(
-            f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}", fg="green"
-        )
-
-        ts_tags = click.style(" ".join(str(t) for t in ts.tags), fg="green")
-
-        # Display data on single line
-        click.echo(
-            f"{ts_id} {ts_duration} ({ts_start_hr} - {ts_end_hr}) {ts_project} {ts_tags}"
-        )
+        click.echo(ts.toHR())
 
 
 @cli.command()
@@ -257,13 +232,83 @@ def add(ctx, to, from_, project, tags):
     jkt.add(ts)
 
 
-"""
 @cli.command()
-@click.argument("index")
-def edit(index):
-    # Edits categories, projects, tags and timeslots
-    pass
-"""
+@click.argument("id")
+@click.option(
+    "-s",
+    "--start",
+    "start",
+    type=click.DateTime(formats=["%d-%m-%y %H:%M"]),
+    help="Starttime",
+    default=None,
+)
+@click.option(
+    "-e",
+    "--end",
+    "end",
+    type=click.DateTime(formats=["%d-%m-%y %H:%M"]),
+    help="Endtime",
+    default=None,
+)
+@click.option(
+    "-p",
+    "--project",
+    "project",
+    help="Project name",
+    default=None,
+)
+@click.option(
+    "-t",
+    "--tag",
+    "tags",
+    multiple=True, 
+    help="Tag, can be used multiple times",
+    default=None,
+)
+@click.pass_context
+def edit(ctx, id, start, end, project, tags):
+    """
+    Edits timeslots. \n
+    The given timeslot is the baseline and modified with the changes given in this command.
+    """
+    jkt = ctx.obj["jakt"]
+
+    ts = jkt.getTimeslot(queryId=id)
+    
+    # Get all parameters current for matching timeslot 
+    newStart = ts.start
+    newEnd = ts.end
+    newProject = ts.project
+    newTags = ts.tags
+
+    # Update given fields
+    if start is not None:
+        newStart = int(start.timestamp())
+
+    if end is not None:
+        newEnd = int(end.timestamp())
+
+    if project is not None:
+        newProject = project
+
+    if tags != ():
+        newTags = list(tags)
+
+    # Initialize new timeslot
+    newTS = timeslot(
+            ID = id,
+            start = newStart,
+            end = newEnd,
+            project = newProject,
+            tags = newTags,
+        )
+
+    # Update the entry in data
+    jkt.editTimeslot(queryId=id, ts=newTS)
+
+    # Print the updated timeslot
+    click.echo(newTS.toHR())
+
 
 
 @cli.command()

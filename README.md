@@ -17,6 +17,7 @@ Jakt is a tool for timetracking. It has support for:
 - [x] Tags
 - [x] Live tracking from commandline
 - [x] Manually adding time that is not tracked live
+- [x] Editing tags and projects in previously tracked time
 - [x] A python library that can be used in other applications
 
 For feature requests please open an [issue](https://github.com/kwillno/jakt/issues).

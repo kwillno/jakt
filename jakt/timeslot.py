@@ -1,5 +1,6 @@
 from datetime import datetime
 import json
+import click
 
 
 class timeslot:
@@ -79,7 +80,8 @@ class timeslot:
         Returns timeslot in interface friendly format
         """
 
-        tags_hr = " ".join(str(t) for t in self.tags)
+        id = click.style(self.id, fg="yellow")
+        project = click.style(self.project, fg="blue", bold=True)
 
         # Make sure time is readable and makes sense
         if self.start_dt.date() == self.end_dt.date():
@@ -89,7 +91,16 @@ class timeslot:
 
         end_hr = self.end_dt.strftime("%H:%M %d-%m-%y")
 
-        returnString = f"{self.id} {self.duration} ({start_hr} - {end_hr}) {self.project} {tags_hr}"
+        s = str(self.duration).split(":")
+        duration = click.style(
+            f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}", fg="green"
+        )
+
+        tags = click.style(" ".join(str(t) for t in self.tags), fg="green")
+
+        returnString = f"{id} {duration} ({start_hr} - {end_hr}) {project} {tags}"
+
+        #returnString = f"{self.id} {self.duration} ({start_hr} - {end_hr}) {self.project} {tags_hr}"
 
         return returnString
 

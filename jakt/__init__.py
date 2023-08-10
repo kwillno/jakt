@@ -166,6 +166,27 @@ class jakt:
 
         return ts
 
+    def editTimeslot(self, queryId:str = None, ts:timeslot = None):
+        """
+        Replaces timeslot matching queryId with the modified timeslot ts
+        """
+        if queryId is None:
+            raise JaktError("ID must be set.")
+
+        if ts is None:
+            raise JaktError("Updated timeslot must be set.")
+
+        timeslots = self.getTimeslots()
+
+        # Update all timeslots
+
+        # Replace timeslot with id=ID with ts
+        for i in range(len(timeslots)):
+            if timeslots[i].id == queryId:
+                timeslots[i] = ts
+
+        self.putTimeslots(timeslots)
+
     def report(self) -> JaktReport:
         """
         Returns a JaktReport object
