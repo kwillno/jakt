@@ -39,8 +39,10 @@ class JaktReport:
         return f"{self.data}"
 
     def hrDuration(self, td):
-        s = str(td).split(":")
-        return f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}"
+        hrs,rem = divmod(td.seconds, 3600)
+        mns,scs = divmod(rem, 60)
+        hrs += 24*td.days
+        return f"{int(hrs):02}:{int(mns):02}:{int(scs):02}"
 
     def getProjectReport(self, project: str = "") -> list[dict]:
         report = []

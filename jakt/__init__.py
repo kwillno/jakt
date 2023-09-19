@@ -499,7 +499,12 @@ class jakt:
 
         timeslots = []
 
+
         for ts in rawTimeslots:
+
+            if ts[0] == "":
+                continue
+
             # Timestamps
             start = int(ts[1])
             end = int(ts[2])
