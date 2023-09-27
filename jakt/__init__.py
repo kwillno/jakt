@@ -187,6 +187,8 @@ class jakt:
 
         self.putTimeslots(timeslots)
 
+        return ts
+
     def report(self) -> JaktReport:
         """
         Returns a JaktReport object
