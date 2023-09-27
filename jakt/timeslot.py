@@ -75,13 +75,10 @@ class timeslot:
 
         return {"hh": hh, "H": hh, "mm": mm, "M": M, "ss": ss}
 
-    def toHR(self):
+    def toHR(self, clickDisable = False):
         """
         Returns timeslot in interface friendly format
         """
-
-        id = click.style(self.id, fg="yellow")
-        project = click.style(self.project, fg="blue", bold=True)
 
         # Make sure time is readable and makes sense
         if self.start_dt.date() == self.end_dt.date():
@@ -91,16 +88,27 @@ class timeslot:
 
         end_hr = self.end_dt.strftime("%H:%M %d-%m-%y")
 
+        # Make duration human readable
         s = str(self.duration).split(":")
-        duration = click.style(
-            f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}", fg="green"
-        )
+        duration = f"{int(s[0]):02}:{int(s[1]):02}:{int(s[2]):02}"
 
-        tags = click.style(" ".join(str(t) for t in self.tags), fg="green")
+        # Cast tags as string with spaces between.
+        tags = " ".join(str(t) for t in self.tags)
+
+        if clickDisable:
+            # If click is disabled, strings need to be returned without color.
+            return f"{self.id} {duration} ({start_hr} - {end_hr}) {self.project} {tags}"
+
+        # Adds color when outputting using click.
+        id = click.style(self.id, fg="yellow")
+        project = click.style(self.project, fg="blue", bold=True)
+        
+        duration = click.style(duration, fg="green")
+
+        # Cast tags as string with spaces between.
+        tags = click.style(tags, fg="green")
 
         returnString = f"{id} {duration} ({start_hr} - {end_hr}) {project} {tags}"
-
-        #returnString = f"{self.id} {self.duration} ({start_hr} - {end_hr}) {self.project} {tags_hr}"
 
         return returnString
 
